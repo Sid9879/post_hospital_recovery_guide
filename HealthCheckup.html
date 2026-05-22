@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health CheckUp</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --font-sans: Arial, Helvetica, sans-serif;
+    --color-text-primary: #172026;
+    --color-text-secondary: #5B6871;
+    --color-text-tertiary: #8A969E;
+    --color-background-primary: #FFFFFF;
+    --color-background-secondary: #F4F7F6;
+    --color-border-secondary: #CAD5D2;
+    --color-border-tertiary: #DDE5E2;
+    --border-radius-md: 8px;
+    --border-radius-lg: 8px;
+  }
+  body { font-family: var(--font-sans); background: #F7FAF9; color: var(--color-text-primary); }
+  .page { max-width: 680px; margin: 0 auto; padding: 1.5rem 0; }
+  .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+  .auth-shell { width: min(940px, 100%); display: grid; grid-template-columns: 0.9fr 1fr; background: #FFFFFF; border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; overflow: hidden; box-shadow: 0 20px 60px rgba(23, 32, 38, 0.08); }
+  .auth-intro { background: #E8F4EF; padding: 2rem; display: flex; flex-direction: column; justify-content: space-between; gap: 2rem; }
+  .auth-intro h1 { font-size: 28px; font-weight: 600; margin-bottom: 10px; }
+  .auth-intro p { color: var(--color-text-secondary); line-height: 1.55; font-size: 15px; }
+  .auth-note { border-top: 0.5px solid #C8DDD5; padding-top: 1rem; font-size: 13px; color: #416357; }
+  .auth-panel { padding: 2rem; }
+  .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; background: var(--color-background-secondary); padding: 4px; border-radius: 8px; }
+  .auth-tab { border: 0; background: transparent; color: var(--color-text-secondary); border-radius: 6px; padding: 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .auth-tab.active { background: #FFFFFF; color: var(--color-text-primary); box-shadow: 0 1px 5px rgba(23, 32, 38, 0.08); }
+  .auth-form { display: none; }
+  .auth-form.active { display: block; }
+  .auth-form h2 { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+  .auth-form > p { color: var(--color-text-secondary); font-size: 14px; margin-bottom: 1rem; }
+  .auth-form .form-group { margin-bottom: 12px; }
+  .auth-footer { margin-top: 1rem; font-size: 13px; color: var(--color-text-secondary); text-align: center; }
+  .link-btn { border: none; background: none; color: #176B58; font-weight: 600; cursor: pointer; }
+  .app-view { display: none; }
+  .app-view.active { display: block; }
+  .topbar { max-width: 680px; margin: 0 auto; padding: 1rem 0 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .user-chip { font-size: 13px; color: var(--color-text-secondary); }
+  .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .btn-secondary { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; }
+  .btn-secondary:hover { background: var(--color-background-secondary); }
+  .hero { text-align: center; padding: 2rem 1rem 1.5rem; }
+  .hero h1 { font-size: 26px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
+  .hero p { font-size: 15px; color: var(--color-text-secondary); max-width: 460px; margin: 0 auto; }
+  .form-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.5rem; margin: 1rem 0; }
+  .form-card h2 { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 13px; color: var(--color-text-secondary); }
+  .form-group select, .form-group input { font-size: 14px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 11px; color: var(--color-text-primary); background: #FFFFFF; }
+  .btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border: none; border-radius: var(--border-radius-md); padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; margin-top: 8px; }
+  .btn-primary:disabled { cursor: not-allowed; opacity: 0.65; }
+  .btn-primary:hover { opacity: 0.85; }
+  .results { display: none; margin-top: 1rem; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin: 1.5rem 0 0.75rem; }
+  .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+  .day-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem; }
+  .day-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .day-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 8px; }
+  .day-tasks { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+  .day-tasks li { font-size: 13px; color: var(--color-text-secondary); padding-left: 14px; position: relative; line-height: 1.4; }
+  .day-tasks li::before { content: "•"; position: absolute; left: 0; color: var(--color-text-tertiary); }
+  .pills-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { font-size: 13px; padding: 5px 12px; border-radius: 999px; border: 0.5px solid var(--color-border-tertiary); color: var(--color-text-secondary); background: var(--color-background-secondary); }
+  .pill.warn { background: #FAEEDA; color: #854F0B; border-color: #FAC775; }
+  .pill.safe { background: #EAF3DE; color: #3B6D11; border-color: #C0DD97; }
+  .pill.info { background: #E6F1FB; color: #185FA5; border-color: #B5D4F4; }
+  .warning-list { display: flex; flex-direction: column; gap: 8px; }
+  .warning-item { display: flex; align-items: flex-start; gap: 10px; background: #FCEBEB; border: 0.5px solid #F7C1C1; border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .warning-icon { width: 18px; height: 18px; background: #E24B4A; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .warning-icon span { color: #fff; font-size: 11px; font-weight: 700; }
+  .warning-item p { font-size: 13px; color: #791F1F; line-height: 1.5; }
+  .followup-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; }
+  .followup-card p { font-size: 14px; color: var(--color-text-primary); font-weight: 500; }
+  .followup-card span { font-size: 13px; color: var(--color-text-secondary); }
+  .reset-btn { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 16px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; margin-top: 1.5rem; }
+  .reset-btn:hover { background: var(--color-background-secondary); }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(23, 32, 38, 0.45); display: none; align-items: center; justify-content: center; padding: 1rem; z-index: 10; }
+  .modal-backdrop.active { display: flex; }
+  .modal { width: min(440px, 100%); background: #FFFFFF; border-radius: 8px; padding: 1.25rem; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .modal-header h2 { font-size: 17px; font-weight: 600; }
+  .close-btn { border: none; background: var(--color-background-secondary); border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 20px; line-height: 1; color: var(--color-text-secondary); }
+  @media (max-width: 720px) {
+    .auth-shell { grid-template-columns: 1fr; }
+    .auth-intro { padding: 1.5rem; }
+    .topbar { padding: 1rem 1rem 0; }
+    .page { padding-left: 1rem; padding-right: 1rem; }
+  }
+  @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+
+</style>
+<body>
+<div class="auth-page" id="auth-view">
+  <div class="auth-shell">
+    <div class="auth-intro">
+      <div>
+        <h1>Health CheckUp</h1>
+        <p>Login or create an account to open your post-hospital recovery guide and manage your profile.</p>
+      </div>
+      <div class="auth-note">Your recovery plan opens after successful login.</div>
+    </div>
+    <div class="auth-panel">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="login-tab" type="button" onclick="showAuthForm('login')">Login</button>
+        <button class="auth-tab" id="signup-tab" type="button" onclick="showAuthForm('signup')">Sign up</button>
+      </div>
+
+      <form class="auth-form active" id="login-form" onsubmit="loginUser(event)">
+        <h2>Welcome back</h2>
+        <p>Use your email and password to continue.</p>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="login-email" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" autocomplete="current-password" required />
+        </div>
+        <button class="btn-primary" id="login-button" type="submit">Login</button>
+        <div class="auth-footer">New here? <button class="link-btn" type="button" onclick="showAuthForm('signup')">Create an account</button></div>
+      </form>
+
+      <form class="auth-form" id="signup-form" onsubmit="registerUser(event)">
+        <h2>Create account</h2>
+        <p>Register once, then use the main recovery guide.</p>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="signup-name" autocomplete="name" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="signup-email" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label>Mobile</label>
+          <input type="tel" id="signup-mobile" autocomplete="tel" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="signup-password" autocomplete="new-password" required />
+        </div>
+        <button class="btn-primary" id="signup-button" type="submit">Sign up</button>
+        <div class="auth-footer">Already registered? <button class="link-btn" type="button" onclick="showAuthForm('login')">Login</button></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="app-view" id="app-view">
+<div class="topbar">
+  <div class="user-chip" id="user-chip">Signed in</div>
+  <div class="topbar-actions">
+    <button class="btn-secondary" type="button" onclick="openProfileModal()">Edit profile</button>
+    <button class="btn-secondary" type="button" onclick="logoutUser()">Logout</button>
+  </div>
+</div>
+<div class="page">
+  <div class="hero">
+    <h1>Post-Hospital Recovery Guide</h1>
+    <p>Enter your details below to get a personalized day-by-day recovery plan with diet tips, warning signs, and follow-up reminders.</p>
+  </div>
+  <div class="form-card" id="form-section">
+    <h2>Tell us about your discharge</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Condition / Surgery type</label>
+        <select id="condition">
+          <option value="">Select one...</option>
+          <option value="appendix">Appendix surgery</option>
+          <option value="heart">Heart / Cardiac procedure</option>
+          <option value="fracture">Bone fracture / Ortho surgery</option>
+          <option value="typhoid">Typhoid / Viral fever</option>
+          <option value="delivery">Childbirth / Delivery</option>
+          <option value="abdominal">Abdominal surgery</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Patient age group</label>
+        <select id="age">
+          <option value="">Select one...</option>
+          <option value="child">Child (under 12)</option>
+          <option value="teen">Teen (12–17)</option>
+          <option value="adult">Adult (18–59)</option>
+          <option value="senior">Senior (60+)</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Discharge date</label>
+        <input type="date" id="discharge-date" />
+      </div>
+      <div class="form-group">
+        <label>Any existing condition?</label>
+        <select id="existing">
+          <option value="none">None</option>
+          <option value="diabetes">Diabetes</option>
+          <option value="bp">High blood pressure</option>
+          <option value="heart">Heart condition</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="generatePlan()">Generate my recovery plan</button>
+  </div>
+
+  <div class="results" id="results-section">
+    <div class="section-title">Day-by-day recovery plan</div>
+    <div class="days-grid" id="days-grid"></div>
+
+    <div class="section-title">What to eat</div>
+    <div class="pills-row" id="eat-pills"></div>
+
+    <div class="section-title" style="margin-top:1.2rem">What to avoid</div>
+    <div class="pills-row" id="avoid-pills"></div>
+
+    <div class="section-title">Warning signs — see a doctor immediately if you notice</div>
+    <div class="warning-list" id="warning-list"></div>
+
+    <div class="section-title">Follow-up schedule</div>
+    <div style="display: flex; flex-direction: column; gap: 8px;" id="followup-list"></div>
+
+    <button class="reset-btn" onclick="resetForm()">Start over</button>
+  </div>
+</div>
+</div>
+
+<div class="modal-backdrop" id="profile-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Profile</h2>
+      <button class="close-btn" type="button" onclick="closeProfileModal()">&times;</button>
+    </div>
+    <form onsubmit="updateProfile(event)">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="profile-name" required />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="profile-email" required />
+      </div>
+      <div class="form-group">
+        <label>Mobile</label>
+        <input type="tel" id="profile-mobile" required />
+      </div>
+      <button class="btn-primary" id="profile-button" type="submit">Update profile</button>
+    </form>
+  </div>
+</div>
+<script>
+const API_BASE = 'https://healthcheckup.onrender.com/api/auth';
+const TOKEN_KEY = 'healthcheckup_token';
+let currentUser = null;
+
+function toast(message, type = 'info') {
+  const colors = {
+    success: '#176B58',
+    error: '#B42318',
+    info: '#172026'
+  };
+
+  if (window.Toastify) {
+    Toastify({
+      text: message,
+      duration: 3000,
+      gravity: 'top',
+      position: 'right',
+      style: { background: colors[type] || colors.info }
+    }).showToast();
+    return;
+  }
+
+  alert(message);
+}
+
+function getToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+function setToken(token) {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
+function extractToken(data) {
+  return data?.token || data?.accessToken || data?.jwt || data?.data?.token || data?.data?.accessToken;
+}
+
+function extractUser(data) {
+  return data?.user || data?.data?.user || data?.data || data;
+}
+
+async function authRequest(path, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {})
+  };
+
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
+
+  if (!response.ok) {
+    throw new Error(data?.message || data?.error || 'Something went wrong. Please try again.');
+  }
+
+  return data;
+}
+
+function setButtonLoading(buttonId, isLoading, loadingText, normalText) {
+  const button = document.getElementById(buttonId);
+  button.disabled = isLoading;
+  button.textContent = isLoading ? loadingText : normalText;
+}
+
+function showAuthForm(formName) {
+  document.getElementById('login-form').classList.toggle('active', formName === 'login');
+  document.getElementById('signup-form').classList.toggle('active', formName === 'signup');
+  document.getElementById('login-tab').classList.toggle('active', formName === 'login');
+  document.getElementById('signup-tab').classList.toggle('active', formName === 'signup');
+}
+
+function showApp() {
+  document.getElementById('auth-view').style.display = 'none';
+  document.getElementById('app-view').classList.add('active');
+}
+
+function showAuth() {
+  document.getElementById('auth-view').style.display = 'flex';
+  document.getElementById('app-view').classList.remove('active');
+}
+
+function updateUserUi(user) {
+  currentUser = user || currentUser || {};
+  const name = currentUser.name || currentUser.email || 'Signed in';
+  document.getElementById('user-chip').textContent = `Signed in as ${name}`;
+  document.getElementById('profile-name').value = currentUser.name || '';
+  document.getElementById('profile-email').value = currentUser.email || '';
+  document.getElementById('profile-mobile').value = currentUser.mobile || '';
+}
+
+async function loadProfile() {
+  const data = await authRequest('/me', { method: 'GET' });
+  updateUserUi(extractUser(data));
+}
+
+async function finishAuth(data, successMessage) {
+  const token = extractToken(data);
+  if (!token) {
+    throw new Error('Login succeeded, but no token was returned by the server.');
+  }
+
+  setToken(token);
+  updateUserUi(extractUser(data));
+  showApp();
+  toast(successMessage, 'success');
+
+  try {
+    await loadProfile();
+  } catch (error) {
+    toast(error.message, 'error');
+  }
+}
+
+async function loginUser(event) {
+  event.preventDefault();
+  setButtonLoading('login-button', true, 'Logging in...', 'Login');
+
+  try {
+    const data = await authRequest('/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: document.getElementById('login-email').value.trim(),
+        password: document.getElementById('login-password').value
+      })
+    });
+    await finishAuth(data, 'Logged in successfully.');
+  } catch (error) {
+    toast(error.message, 'error');
+  } finally {
+    setButtonLoading('login-button', false, 'Logging in...', 'Login');
+  }
+}
+
+async function registerUser(event) {
+  event.preventDefault();
+  setButtonLoading('signup-button', true, 'Creating account...', 'Sign up');
+
+  try {
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    const data = await authRequest('/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: document.getElementById('signup-name').value.trim(),
+        email,
+        mobile: document.getElementById('signup-mobile').value.trim(),
+        password
+      })
+    });
+
+    if (extractToken(data)) {
+      await finishAuth(data, 'Account created successfully.');
+    } else {
+      const loginData = await authRequest('/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
+      await finishAuth(loginData, 'Account created successfully.');
+    }
+  } catch (error) {
+    toast(error.message, 'error');
+  } finally {
+    setButtonLoading('signup-button', false, 'Creating account...', 'Sign up');
+  }
+}
+
+function logoutUser() {
+  clearToken();
+  currentUser = null;
+  showAuth();
+  toast('Logged out successfully.', 'success');
+}
+
+function openProfileModal() {
+  updateUserUi(currentUser || {});
+  document.getElementById('profile-modal').classList.add('active');
+}
+
+function closeProfileModal() {
+  document.getElementById('profile-modal').classList.remove('active');
+}
+
+async function updateProfile(event) {
+  event.preventDefault();
+  setButtonLoading('profile-button', true, 'Updating...', 'Update profile');
+
+  try {
+    const data = await authRequest('/me', {
+      method: 'PUT',
+      body: JSON.stringify({
+        name: document.getElementById('profile-name').value.trim(),
+        email: document.getElementById('profile-email').value.trim(),
+        mobile: document.getElementById('profile-mobile').value.trim()
+      })
+    });
+    updateUserUi(extractUser(data));
+    closeProfileModal();
+    toast('Profile updated successfully.', 'success');
+  } catch (error) {
+    toast(error.message, 'error');
+  } finally {
+    setButtonLoading('profile-button', false, 'Updating...', 'Update profile');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!getToken()) {
+    showAuth();
+    return;
+  }
+
+  showApp();
+  try {
+    await loadProfile();
+  } catch (error) {
+    clearToken();
+    showAuth();
+    toast('Please login again.', 'error');
+  }
+});
+
+const plans = {
+  appendix: {
+    days: [
+      { label: "Day 1–2", title: "Rest completely", tasks: ["Stay in bed", "Sip only liquids", "No lifting anything", "Keep wound dry"] },
+      { label: "Day 3–5", title: "Gentle movement", tasks: ["Short walks indoors", "Soft foods only", "Check wound for redness", "Take prescribed medicines"] },
+      { label: "Day 6–10", title: "Light activity", tasks: ["Increase walking", "Semi-solid foods", "No driving yet", "Avoid stairs if painful"] },
+      { label: "Day 11–14", title: "Resume routine", tasks: ["Light household tasks", "Normal diet slowly", "Stitches removed (if applicable)", "Follow up with surgeon"] }
+    ],
+    eat: ["Rice kanji", "Dal soup", "Curd rice", "Boiled vegetables", "Banana", "Coconut water"],
+    avoid: ["Spicy food", "Fried items", "Raw vegetables", "Alcohol", "Heavy lifting"],
+    warnings: ["Wound turning red or oozing pus", "Fever above 101°F", "Severe stomach pain", "Unable to pass stool for 3+ days"],
+    followup: [{ day: "Day 7", note: "Wound check with surgeon" }, { day: "Day 14", note: "Stitch removal appointment" }, { day: "1 Month", note: "Full recovery assessment" }]
+  },
+  heart: {
+    days: [
+      { label: "Day 1–3", title: "Complete bed rest", tasks: ["No physical exertion", "Monitor pulse daily", "Take all medicines on time", "No salt in food"] },
+      { label: "Day 4–7", title: "Sitting & standing", tasks: ["Sit up for meals", "5-min slow walks", "Avoid stress & excitement", "Track BP daily"] },
+      { label: "Week 2", title: "Supervised walking", tasks: ["15-min morning walk", "Low-sodium soft diet", "No climbing stairs fast", "Report chest discomfort"] },
+      { label: "Week 3–4", title: "Gradual increase", tasks: ["Cardiac rehab exercises", "Light tasks at home", "Continue medicines", "Follow-up with cardiologist"] }
+    ],
+    eat: ["Oats porridge", "Steamed fish", "Salads", "Fruits", "Dal", "Low-fat milk"],
+    avoid: ["Salt", "Fried food", "Red meat", "Pickles", "Alcohol", "Smoking"],
+    warnings: ["Chest pain or tightness", "Shortness of breath at rest", "Irregular heartbeat", "Swelling in legs or ankles", "Dizziness or fainting"],
+    followup: [{ day: "Day 3", note: "ECG check with cardiologist" }, { day: "Day 14", note: "Blood pressure and medication review" }, { day: "1 Month", note: "Stress test and full cardiac check" }]
+  },
+  fracture: {
+    days: [
+      { label: "Day 1–3", title: "Immobilization", tasks: ["Keep limb elevated", "Ice pack (15 min on/off)", "No weight bearing", "Pain medication as prescribed"] },
+      { label: "Day 4–7", title: "Rest & hygiene", tasks: ["Keep cast dry", "Gentle finger/toe exercises", "Eat calcium-rich foods", "Physiotherapist visit if advised"] },
+      { label: "Week 2–3", title: "Assisted movement", tasks: ["Use crutches or walker", "Gentle exercises as told", "Check for swelling daily", "Attend physio sessions"] },
+      { label: "Week 4+", title: "Rehabilitation", tasks: ["Progressive weight bearing", "Strengthening exercises", "X-ray follow-up", "Return to normal slowly"] }
+    ],
+    eat: ["Milk", "Cheese", "Paneer", "Green leafy vegetables", "Eggs", "Almonds", "Sesame seeds"],
+    avoid: ["Alcohol", "Smoking (slows healing)", "Carbonated drinks", "Excessive salt"],
+    warnings: ["Numbness or tingling in limb", "Cast becomes too tight", "Wound smells or oozes", "Fever", "Severe pain not relieved by medicines"],
+    followup: [{ day: "Day 7", note: "Wound and cast check" }, { day: "3 Weeks", note: "X-ray to check bone alignment" }, { day: "6 Weeks", note: "Cast removal assessment" }]
+  },
+  typhoid: {
+    days: [
+      { label: "Day 1–3", title: "Full rest", tasks: ["Stay indoors", "Only boiled water", "Liquid diet", "Medicines strictly on time"] },
+      { label: "Day 4–7", title: "Soft foods begin", tasks: ["Khichdi, curd rice", "Avoid raw food", "Monitor temperature", "Rest between meals"] },
+      { label: "Week 2", title: "Energy returning", tasks: ["Light solid food", "Short outdoor walks", "Watch for relapse signs", "Stool test if advised"] },
+      { label: "Week 3", title: "Gradual normal diet", tasks: ["Reintroduce vegetables", "Resume light work", "Complete antibiotic course", "Full stool hygiene"] }
+    ],
+    eat: ["Khichdi", "Curd", "Banana", "Boiled potato", "Coconut water", "Moong dal soup"],
+    avoid: ["Raw salad", "Street food", "Spicy food", "Unboiled water", "High-fiber vegetables"],
+    warnings: ["Fever returning after seeming better", "Severe abdominal pain", "Blood in stool", "Confusion or extreme weakness"],
+    followup: [{ day: "Day 7", note: "Blood test to check recovery" }, { day: "Day 14", note: "Stool culture test" }, { day: "1 Month", note: "General health check-up" }]
+  },
+  delivery: {
+    days: [
+      { label: "Day 1–2", title: "Rest & breastfeed", tasks: ["Skin-to-skin with baby", "Rest as much as possible", "Breastfeed every 2–3 hrs", "Check for heavy bleeding"] },
+      { label: "Day 3–7", title: "Recovery at home", tasks: ["Sitz baths if stitches", "Iron and calcium tablets", "Gentle walking", "Healthy meals & hydration"] },
+      { label: "Week 2–3", title: "Gentle movement", tasks: ["Short outdoor walks", "Pelvic floor exercises", "Monitor mood for baby blues", "Avoid heavy lifting"] },
+      { label: "Week 6", title: "Postnatal check", tasks: ["Visit gynaecologist", "Resume light exercise", "Contraception discussion", "Emotional wellbeing check"] }
+    ],
+    eat: ["Methi laddoo", "Dry fruits", "Milk", "Iron-rich dal", "Green vegetables", "Papaya", "Oats"],
+    avoid: ["Spicy food (if breastfeeding)", "Raw papaya", "Alcohol", "Caffeine", "Processed food"],
+    warnings: ["Heavy bleeding (soaking pad in 1 hour)", "Foul-smelling discharge", "Severe headache or vision changes", "Signs of postpartum depression", "Breast redness or fever"],
+    followup: [{ day: "Day 3", note: "Baby weight check and jaundice test" }, { day: "Day 7", note: "Stitch removal if applicable" }, { day: "6 Weeks", note: "Postnatal check with gynaecologist" }]
+  },
+  abdominal: {
+    days: [
+      { label: "Day 1–2", title: "Liquids only", tasks: ["Only clear liquids", "Rest fully", "Pain medicines as given", "Keep wound covered"] },
+      { label: "Day 3–5", title: "Soft diet begins", tasks: ["Porridge, soups", "Short slow walks", "No bending or straining", "Watch wound for infection"] },
+      { label: "Week 2", title: "Light activity", tasks: ["Normal soft meals", "15-min gentle walks", "No driving", "Avoid constipation"] },
+      { label: "Week 3–4", title: "Resume routine", tasks: ["Normal diet", "Light work", "No heavy lifting for 6 weeks", "Surgeon follow-up"] }
+    ],
+    eat: ["Soups", "Khichdi", "Curd", "Banana", "Steamed rice", "Boiled vegetables"],
+    avoid: ["Spicy food", "Beans and lentils (gas)", "Fried items", "Carbonated drinks", "Heavy meals"],
+    warnings: ["Wound opens or leaks", "Fever above 101°F", "Unable to pass gas or stool", "Severe nausea or vomiting", "Stomach becomes hard or distended"],
+    followup: [{ day: "Day 5", note: "Wound check at clinic" }, { day: "2 Weeks", note: "Stitch removal" }, { day: "1 Month", note: "Surgeon follow-up and imaging if needed" }]
+  }
+};
+
+function generatePlan() {
+  const condition = document.getElementById('condition').value;
+  const age = document.getElementById('age').value;
+  const existing = document.getElementById('existing').value;
+
+  if (!condition || !age) {
+    alert('Please select your condition and age group.');
+    return;
+  }
+
+  const plan = plans[condition];
+
+  const daysGrid = document.getElementById('days-grid');
+  daysGrid.innerHTML = plan.days.map(d => `
+    <div class="day-card">
+      <div class="day-label">${d.label}</div>
+      <div class="day-title">${d.title}</div>
+      <ul class="day-tasks">${d.tasks.map(t => `<li>${t}</li>`).join('')}</ul>
+    </div>
+  `).join('');
+
+  document.getElementById('eat-pills').innerHTML = plan.eat.map(e => `<span class="pill safe">${e}</span>`).join('');
+  document.getElementById('avoid-pills').innerHTML = plan.avoid.map(a => `<span class="pill warn">${a}</span>`).join('');
+
+  let warnings = [...plan.warnings];
+  if (existing === 'diabetes') warnings.push('Monitor blood sugar twice daily — healing is slower in diabetics');
+  if (existing === 'bp') warnings.push('Check BP daily — stress of recovery can raise blood pressure');
+
+  document.getElementById('warning-list').innerHTML = warnings.map(w => `
+    <div class="warning-item">
+      <div class="warning-icon"><span>!</span></div>
+      <p>${w}</p>
+    </div>
+  `).join('');
+
+  document.getElementById('followup-list').innerHTML = plan.followup.map(f => `
+    <div class="followup-card">
+      <p>${f.note}</p>
+      <span>${f.day}</span>
+    </div>
+  `).join('');
+
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'block';
+}
+
+function resetForm() {
+  document.getElementById('condition').value = '';
+  document.getElementById('age').value = '';
+  document.getElementById('existing').value = 'none';
+  document.getElementById('discharge-date').value = '';
+  document.getElementById('form-section').style.display = 'block';
+  document.getElementById('results-section').style.display = 'none';
+}
+
+</script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</body>
+</html>
